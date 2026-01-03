@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASTREAM</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        video {
+            max-width: 100%;
+            max-height: 100%;
+            display: block;
+        }
+    </style>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/jmuxer@2.1.0/dist/jmuxer.min.js"></script>
+</head>
+<body>
+    <video id="player" autoplay muted playsinline></video>
+    <script>
+        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const host = window.location.host;
+        const wsUrl = `${protocol}://${host}/view`;
+        console.log("Connecting to:", wsUrl);
+        const jmuxer = new JMuxer({
+            node: 'player',
+            mode: 'video',
+            flushingTime: 0,
+            clearBuffer: true,
+            fps: 30,
+            debug: false,
+            readFpsFromTrack: false, 
+        });
+        const ws = new WebSocket(wsUrl);
+        ws.binaryType = 'arraybuffer'; 
+        ws.onopen = () => {
+            console.log("Connected to Stream Relay");
+        };
+        ws.onmessage = (event) => {
+            jmuxer.feed({
+                video: new Uint8Array(event.data)
+            });
+        };
+        ws.onclose = () => {
+            console.log("Stream Ended");
+        };
+    </script>
+</body>
+</html>
